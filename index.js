@@ -2,7 +2,7 @@ var express 				= require("express"),
 	mongoose 				= require("mongoose"),
 	passport 				= require("passport"),
 	bodyParser 				= require("body-parser"),
-	User					= require("./models/user"), 
+	User					= require("./models/user"),
 	Customer                = require("./models/customer"),
 	Route 					= require("./models/route"),
 	LocalStrategy 			= require("passport-local"),
@@ -24,7 +24,7 @@ app.use(passport.session());
 passport.use(new LocalStrategy(User.authenticate()));
 passport.serializeUser(User.serializeUser());
 passport.deserializeUser(User.deserializeUser());
-		
+
 app.use(function(req, res, next){
 	res.locals.currentUser = req.user;
 	next();
@@ -72,21 +72,12 @@ app.get("/route", isLoggedIn, function(req, res){
 });
 
 app.post("/route", function(req, res){
-	var date = req.body.date;
-	//console.log(date);
-	var newdate = {date: date};
-	Route.create(newdate, function(err, newlyCreatedDate){
+	var date = new Date(req.body.date);
+	Customer.find({deliverydate: new Date(date)}, function(err, data){
 		if(err){
 			console.log(err);
 		} else{
-			//res.redirect("/");	
-			Customer.find({d_date: date}, function(err, data){
-				if(err){
-					console.log(err);
-				} else{
-					res.render("map", {data: data});
-				}
-			})
+			res.render("map", {data: data});
 		}
 	})
 });
