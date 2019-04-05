@@ -54,7 +54,6 @@ app.post("/customer", function(req, res){
 		if(err){
 			console.log(err);
 		} else{
-			//window.alert("Customer Added Successfully!");
 			res.redirect("/");
 
 		}
@@ -77,6 +76,7 @@ app.post("/route", function(req, res){
 		if(err){
 			console.log(err);
 		} else{
+			//console.log(data);
 			res.render("map", {data: data});
 		}
 	})
