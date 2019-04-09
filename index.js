@@ -1,5 +1,6 @@
 var express 				= require("express"),
 	mongoose 				= require("mongoose"),
+	flash					= require("connect-flash"),
 	passport 				= require("passport"),
 	bodyParser 				= require("body-parser"),
 	User					= require("./models/user"),
@@ -7,12 +8,12 @@ var express 				= require("express"),
 	Route 					= require("./models/route"),
 	LocalStrategy 			= require("passport-local"),
 	passportLocalMongoose   = require("passport-local-mongoose");
-	// shortestDistance		= require("./public/shortestroute");
 mongoose.connect("mongodb://localhost/optimal_route_api");
 
 var app = express();
+app.use(bodyParser.urlencoded({extended: true}));
+app.use(flash());
 app.set("view engine","ejs");
-app.use(bodyParser.urlencoded({extended:true}));
 app.use(require("express-session")({
 	secret: "Doggos are the best",
 	resave: false,
@@ -27,6 +28,8 @@ passport.deserializeUser(User.deserializeUser());
 
 app.use(function(req, res, next){
 	res.locals.currentUser = req.user;
+	res.locals.error = req.flash("error");
+	res.locals.success = req.flash("success");
 	next();
 });
 
@@ -104,6 +107,7 @@ app.post("/login", passport.authenticate("local",
 
 app.get("/logout", function(req, res){
 	req.logout();
+	//req.flash("success", "Logged you out")
 	res.redirect("/");
 });
 
@@ -111,6 +115,7 @@ function isLoggedIn(req, res, next){
 	if(req.isAuthenticated()){
 		return next();
 	}
+	//req.flash("error", "You need to be logged in!");
 	res.redirect("/login");
 }
 

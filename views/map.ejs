@@ -14,7 +14,7 @@
 <body>
 	<h1>Route Map</h1>
 	<div id ='map'></div>
-	<script src='https://maps.googleapis.com/maps/api/js?key=AIzaSyCi_2JJtblU4pvkV3lbe8IfyutcJpJrVrk&v=3.exp'></script>
+	<script src='https://maps.googleapis.com/maps/api/js?key=AIzaSyCi_2JJtblU4pvkV3lbe8IfyutcJpJrVrk'></script>
 	<script type="text/javascript">
 
 	//an array of locations to be visited 
@@ -120,21 +120,7 @@
 				shortestLength = routeResults[i].routes[0].legs[0].distance.value;
 			  }
 			}
-			//directionsDisplay.setDirections(routeResults[shortestIndex]);
-			routeResults.forEach(function(res) {
-				res.routes.forEach(function(route, shortestIndex) {
-					directionsDisplay.setDirections({
-						map: map,
-						directions: res,
-						routeIndex: shortestIndex,
-						polylineOptions: {
-							strokeColor: route.legs[0].distance.value == shortestLength ? "darkgreen" : "blue",
-							strokeOpacity: route.legs[0].distance.value == shortestLength ? 0.9 : 0.5,
-							strokeWeight: route.legs[0].distance.value == shortestLength ? 8 : 3,
-						}
-					});
-				});
-			});
+			directionsDisplay.setDirections(routeResults[shortestIndex]);
 		}
 
 		// Expose the initialize function publicly as "init".
@@ -144,7 +130,7 @@
 	}();
 
 	// Upon page load, lets start the process!
-	google.maps.event.addDomListener(window, 'load', shortestDistance.init(26.8467, -80.9462));
+	google.maps.event.addDomListener(window, 'load', shortestDistance.init(28.6692, 77.4538));
 
 	</script>
 </body>
