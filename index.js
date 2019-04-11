@@ -11,7 +11,7 @@ var express 				= require("express"),
 	seeder					= require("./seed.js");
 
 seeder();
-mongoose.connect("mongodb://localhost/optimal_route_api");
+mongoose.connect("mongodb+srv://frostcover:Fz7vsxHlcuQY6ezj@cluster0-nlz9b.mongodb.net/test?retryWrites=true");
 
 var app = express();
 app.use(bodyParser.urlencoded({extended: true}));
