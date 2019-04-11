@@ -1,0 +1,60 @@
+<% include partials/header %>
+
+    <div class="container">
+        <h2> Deliveries</h2>
+        <table class="table table-striped">
+            <thead class="thead-dark">
+            <tr>
+                <th scope="col">Set</th>
+                <th scope="col">Name</th>
+                <th scope="col">Address</th>
+                <th scope="col">Latitude</th>
+                <th scope="col">Longitude</th>
+                <th scope="col">Date</th>
+                <th scope="col">Status</th>
+            </tr>
+            </thead>
+            <tbody>
+            <%let  i = 1; %>
+        <% data.forEach((entry)=> {%>
+
+            <tr>
+                <th scope="row">
+                    <%=i%>
+                </th>
+                <td><%= entry.customername%></td>
+                <td><%= entry.customeraddress%></td>
+                <td><%= entry.latitude%></td>
+                <td><%= entry.longitude%></td>
+                <td><%= entry.deliverydate.toLocaleDateString()%></td>
+                <td>
+                    <%if(entry.deliveryStatus == "Pending") { %>
+                    <input type="checkbox" class="set-status" data-latitude = "<%=entry.latitude%>"> Delivered </th>
+                    <% } else {%>
+                    <input type="checkbox" data-latitude = "<%=entry.latitude%>" checked disabled> Delivered </th>
+                    <% }%>
+                </td>
+            </tr>
+        <% i = i+1;
+        })%>
+            </tbody>
+        </table>
+    </div>
+    <script>
+        $('.set-status').on('click', function() {
+            let latitude = $(this).data('latitude');
+            $.ajax({
+                type: "POST",
+                url: "/updateStatus",
+                data: {
+                    latitude: latitude
+                },
+                success: function(data){
+                    alert("Status Changed!");
+
+                }
+            });
+            $(this).prop("disabled", true)
+        })
+    </script>
+<% include partials/footer %>

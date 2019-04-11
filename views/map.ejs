@@ -1,8 +1,8 @@
-<!DOCTYPE html>
-<html lang="en">
+<% include partials/header %>
+
+
 <head>
-	<meta charset="utf-8">
-	<meta name="viewport" content="width=device-width, initial-scale=1.0">
+
 	<title>Route Map</title>
 	<style >
 		#map{
@@ -12,126 +12,138 @@
 	</style>
 </head>
 <body>
+	<div class="container">
 	<h1>Route Map</h1>
 	<div id ='map'></div>
-	<script src='https://maps.googleapis.com/maps/api/js?key=API_KEY'></script>
+	<br>
+	<div class="container">
+		<div class="summaryPanel"></div>
+	</div>
+	</div>
+	<script src='https://maps.googleapis.com/maps/api/js?key=AIzaSyCi_2JJtblU4pvkV3lbe8IfyutcJpJrVrk'></script>
 	<script type="text/javascript">
+	function watch(ref, data) {
+		console.log(ref+"\n");
+		console.log(data);
+	}
 
-	//an array of locations to be visited 
 	var stringfyData = '<%- JSON.stringify(data) %>'
 	var finalParsedData = JSON.parse(stringfyData);
 	var deliveryPoints = new Array();
+	var directionsDisplay;
+	var directionService;
+	var currentPosition = new google.maps.LatLng(28.9845, 77.7064);
+	var dPoints= new Array();
 	finalParsedData.forEach(function(ele){
-		var temp = 
-		{
-			latLng: new google.maps.LatLng(parseFloat(ele.latitude), parseFloat(ele.longitude)),
-			title: ele.customeraddress
-		}
+		var temp = new google.maps.LatLng(parseFloat(ele.latitude), parseFloat(ele.longitude));
+
 		deliveryPoints.push(temp);
 	});
+	finalParsedData.forEach(function(ele){
+		var temp =
+				{
+					latLng: new google.maps.LatLng(parseFloat(ele.latitude), parseFloat(ele.longitude)),
+					title: ele.customeraddress
+				}
+		dPoints.push(temp);
+	});
 
-	//console.log(deliveryPoints)
-	var shortestDistance = function() {
-
-		var directionsDisplay;
-		var directionsService = new google.maps.DirectionsService();
-		var map;
-		var size = 0;
-		var currentPosition;
-
-		// An array to store results from Google routing API.
-		var routeResults = [];
-
-		// Call this upon page load to set everything in motion!
-		function initialize(currentLat, currentLng) {
-			currentPosition = new google.maps.LatLng(currentLat, currentLng);
-			directionsDisplay = new google.maps.DirectionsRenderer();
-			var mapOptions = {
-			  zoom: 13,
-			  center: currentPosition
-			};
-			map = new google.maps.Map(document.getElementById('map'), mapOptions);
-			directionsDisplay.setMap(map);
-
-			var marker = new google.maps.Marker({
-				  position: currentPosition,
-				  map: map,
-				  title: 'Currrent location'
-			});
-
-			var i = deliveryPoints.length;
-			 while (i--) {
-			  deliveryPoints[i].marker = new google.maps.Marker({
-				position: deliveryPoints[i].latLng,
+	watch("deliveryPoints", deliveryPoints)
+	function initialize() {
+		directionsService = new google.maps.DirectionsService();
+		directionsDisplay = new google.maps.DirectionsRenderer;
+		var mapOptions = {
+			zoom: 10,
+			center: currentPosition
+		};
+		map = new google.maps.Map(document.getElementById('map'), mapOptions);
+		directionsDisplay.setMap(map);
+		var marker = new google.maps.Marker({
+			position: currentPosition,
+			map: map,
+			title: 'Currrent location'
+		});
+		var i = dPoints.length;
+		while (i--) {
+			dPoints[i].marker = new google.maps.Marker({
+				position: dPoints[i].latLng,
 				map: map,
-				title: deliveryPoints[i].title,
+				title: dPoints[i].title,
 				icon: 'https://maps.google.com/mapfiles/ms/icons/green.png'
-			  });
-			}
-
-			findNearestPlace();
+			});
 		}
+		findFarthest();
+	}
+	function sendBack(request,i) {
+		const returnValue = new Promise((resolve, reject) => {
+			directionsService.route(request, function(response, status) {
+				if(status == google.maps.DirectionsStatus.OK) {
+						resolve(response.routes[0].legs[0].distance.value);
+					}
+				else {
+					reject("Error");
+				}
+			});
+		});
 
-		// Loops through all places to calculate route between our current position
-		// and that place.
-		function findNearestPlace() {
-		  var i = deliveryPoints.length;
-			size = deliveryPoints.length;
-			routeResults = [];
-			while (i--) {
-			  calcRoute(deliveryPoints[i].latLng, storeResult);
-			}
-		}
-
-		// A function to calculate the route between our current position and some desired end point.
-		function calcRoute(end, callback) {
+		return returnValue;
+	}
+	async function findFarthest() {
+		var farthestIndex, i = 0, longest = 0,index;
+		while(i<deliveryPoints.length) {
+			var point  = deliveryPoints[i];
 			var request = {
 				origin: currentPosition,
-				destination: end,
-				travelMode: google.maps.TravelMode.DRIVING
+				destination: point,
+				travelMode: google.maps.DirectionsTravelMode.DRIVING
 			};
-			directionsService.route(request, function(response, status) {
-			  if (status == google.maps.DirectionsStatus.OK) {
-				callback(response);
-			  } else {
-				size--;
-			  }
+			farthestIndex = await sendBack(request, i)
+			if(longest<parseInt(farthestIndex)) {
+				longest = parseInt(farthestIndex);
+				index = i;
+			}
+			i++;
+		}
+		displayRoute(index)
+	}
+	function displayRoute(index) {
+		endPoint = deliveryPoints[index];
+		waypts = [];
+		for(let i=0;i<deliveryPoints.length; i++) {
+			if(i!==index) {
+
+				waypts.push({
+					location: deliveryPoints[i],
+					stopover: true
+				});
+			}
+		}
+		directionsService.route({
+			origin: currentPosition,
+			destination: endPoint,
+			waypoints: waypts,
+			optimizeWaypoints: true,
+			travelMode: 'DRIVING'
+		},function(response, status){
+				if (status === 'OK') {
+					directionsDisplay.setDirections(response);
+					var route = response.routes[0];
+					var summaryPanel = document.querySelector('.summaryPanel')
+					summaryPanel.innerHTML = '';
+					for (var i = 0; i < route.legs.length; i++) {
+						var routeSegment = i + 1;
+						summaryPanel.innerHTML += '<h3>Route Segment: ' + routeSegment +
+								'</h3><br>';
+						summaryPanel.innerHTML += route.legs[i].start_address + ' <b>to</b> ';
+						summaryPanel.innerHTML += route.legs[i].end_address + '<br>';
+						summaryPanel.innerHTML += route.legs[i].distance.text + '<br><hr>';
+
+					}
+				}
 			});
-		}
-
-		// Stores a routing result from the API in our global array for routes.
-		function storeResult(data) {
-			routeResults.push(data);
-			if (routeResults.length === size) {
-			  findShortest();
-			}
-		}
-
-		// Goes through all routes stored and finds which one is the shortest. It then
-		// sets the shortest route on the map for the user to see.
-		function findShortest() {
-			var i = routeResults.length;
-			var shortestIndex = 0;
-			var shortestLength = routeResults[0].routes[0].legs[0].distance.value;
-
-			while (i--) {
-			  if (routeResults[i].routes[0].legs[0].distance.value < shortestLength) {
-				shortestIndex = i;
-				shortestLength = routeResults[i].routes[0].legs[0].distance.value;
-			  }
-			}
-			directionsDisplay.setDirections(routeResults[shortestIndex]);
-		}
-
-		// Expose the initialize function publicly as "init".
-		return {
-			init: initialize
-		};
-	}();
-
-	// Upon page load, lets start the process!
-	google.maps.event.addDomListener(window, 'load', shortestDistance.init(28.6692, 77.4538));
-
+	}
+	initialize(28.9845,77.7064);
 	</script>
+
 </body>
 </html>

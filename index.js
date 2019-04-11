@@ -7,7 +7,10 @@ var express 				= require("express"),
 	Customer                = require("./models/customer"),
 	Route 					= require("./models/route"),
 	LocalStrategy 			= require("passport-local"),
-	passportLocalMongoose   = require("passport-local-mongoose");
+	passportLocalMongoose   = require("passport-local-mongoose"),
+	seeder					= require("./seed.js");
+
+seeder();
 mongoose.connect("mongodb://localhost/optimal_route_api");
 
 var app = express();
@@ -50,7 +53,7 @@ app.post("/customer", function(req, res){
 	var lat = req.body.latitude;
 	var lng = req.body.longitude;
 	var d_date = req.body.deliverydate;
-	//console.log(date);
+	console.log(d_date);
 	var newCustomer = {customername: name, customeraddress: address, latitude: lat, longitude: lng, deliverydate: d_date};
 	//create a new customer and save it to db
 	Customer.create(newCustomer, function(err, newlyCreated){
@@ -84,7 +87,34 @@ app.post("/route", function(req, res){
 		}
 	})
 });
+app.get("/customerShow", (req, res) => {
+    Customer.find({}, (err, data) => {
+        res.render("delivery", {
+            data: data
+        })
+    })
+});
+app.post("/updateStatus", (req, res) => {
 
+    Customer.find({latitude: req.body.latitude}, (err, data) => {
+        if(err)
+            console.log(err);
+        else {
+                if(data[0].deliveryStatus == "Pending") {
+                    Customer.findOneAndUpdate({latitude: req.body.latitude},{ deliveryStatus: "Delivered" }, (err, retData) => {
+                        if(err)
+                            console.log(err);
+                        else {
+                        res.send("Delivered");
+                    }
+                })
+            } else {
+                res.send("Already delivered!");
+            }
+
+        }
+    })
+})
 // ==============
 // AUTH ROUTES
 // ==============
@@ -104,7 +134,20 @@ app.post("/login", passport.authenticate("local",
 	}), function(req, res){
 
 });
-
+User.post("/register", function(req,res) {
+    User.register(new User({username: req.body.username}), req.body.password, function(err, ans) {
+        if(err) {
+            console.log(err);
+            res.send('Error');
+        }
+        else {
+            // Authentication via passport
+            passport.authenticate('User')(req, res, function(){
+                res.send("Registered!");
+            });
+        }
+    });
+});
 app.get("/logout", function(req, res){
 	req.logout();
 	//req.flash("success", "Logged you out")

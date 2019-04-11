@@ -5,6 +5,10 @@ var customerSchema = new mongoose.Schema({
 	customeraddress: String,
 	latitude: String,
 	longitude: String,
+	deliveryStatus: {
+		type: String,
+		default: "Pending"
+	},
 	deliverydate: Date
 });
 
