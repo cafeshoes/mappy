@@ -134,7 +134,7 @@ app.post("/login", passport.authenticate("local",
 	}), function(req, res){
 
 });
-User.post("/register", function(req,res) {
+app.post("/register", function(req,res) {
     User.register(new User({username: req.body.username}), req.body.password, function(err, ans) {
         if(err) {
             console.log(err);
